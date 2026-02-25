@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PO单列表 - 林氏家居</title>
+  
+  <!-- 引入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- 引入 React 和 ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  
+  <!-- 引入 Babel 以在浏览器中编译 JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* 全局自定义滚动条样式，让界面更精致 */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <!-- React 挂载点 -->
+  <div id="root"></div>
+
+  <!-- 业务逻辑代码 -->
+  <script type="text/babel">
+    const { useState } = React;
+
+    // --- 1. 内联重构的 SVG 图标组件 (替代 lucide-react) ---
+    const Users = ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>;
+    const Box = ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg>;
+    const LayoutGrid = ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="14" rx="1"></rect><rect width="7" height="7" x="3" y="14" rx="1"></rect></svg>;
+    const Briefcase = ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>;
+    const FileText = ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" x2="8" y1="13" y2="13"></line><line x1="16" x2="8" y1="17" y2="17"></line><line x1="10" x2="8" y1="9" y2="9"></line></svg>;
+    const BarChart2 = ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" x2="18" y1="20" y2="10"></line><line x1="12" x2="12" y1="20" y2="4"></line><line x1="6" x2="6" y1="20" y2="14"></line></svg>;
+    const Settings = ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>;
+    const Search = ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>;
+    const RotateCcw = ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>;
+    const Download = ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line></svg>;
+    const Mail = ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>;
+    const ChevronDown = ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"></path></svg>;
+    const ChevronUp = ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"></path></svg>;
+    const ChevronLeft = ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"></path></svg>;
+    const ChevronRight = ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"></path></svg>;
+    const MoreHorizontal = ({size=24}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>;
+
+    // --- 2. 模拟数据 ---
+    const mockData = [
+      {
+        id: 1,
+        linshiPo: "L25121726731",
+        customerPo: "CUST-2025-001",
+        orderType: "自主下单",
+        poStatus: "部分发运",
+        cargoType: "非定制",
+        tradeTerm: "FOB",
+        customerGrade: "A",
+        customerName: "First Caribbean Marketing Company Limited",
+        account: "caribbean_main",
+        accountNickname: "FC Main Acc",
+        orderDate: "2025-12-17",
+        totalPackages: 1294,
+        totalVolume: 209.513,
+        amountStandard: 54000.00,
+        amountActual: 53695.11,
+        amountFreight: 0.00,
+        amountAdjustment: -304.89,
+        amountRebate: 0.00,
+        qtyOrdered: 1294,
+        qtyLocked: 1200,
+        qtyScheduled: 1000,
+        qtyShipped: 500,
+        qtyCancelled: 0,
+        salesperson: "Cloris",
+        merchandiser: "Massey,Linda",
+        currency: "USD"
+      },
+      {
+        id: 2,
+        linshiPo: "L25121726732",
+        customerPo: "CUST-2025-002",
+        orderType: "自主下单",
+        poStatus: "已生效",
+        cargoType: "定制",
+        tradeTerm: "CIF",
+        customerGrade: "S",
+        customerName: "Mumu Living Sdn Bhd",
+        account: "mumu_living",
+        accountNickname: "Mumu MY",
+        orderDate: "2025-12-18",
+        totalPackages: 51,
+        totalVolume: 45.816,
+        amountStandard: 68650.00,
+        amountActual: 68650.00,
+        amountFreight: 1200.00,
+        amountAdjustment: 0.00,
+        amountRebate: 500.00,
+        qtyOrdered: 51,
+        qtyLocked: 51,
+        qtyScheduled: 0,
+        qtyShipped: 0,
+        qtyCancelled: 0,
+        salesperson: "Alice",
+        merchandiser: "John,Doe",
+        currency: "CNY"
+      },
+      {
+        id: 3,
+        linshiPo: "L25121726733",
+        customerPo: "FREEDOM-099",
+        orderType: "平台代客下单",
+        poStatus: "调价驳回",
+        cargoType: "非定制",
+        tradeTerm: "EXW",
+        customerGrade: "B",
+        customerName: "Freedom Trades Ltd",
+        account: "freedom_trades",
+        accountNickname: "Freedom UK",
+        orderDate: "2025-12-19",
+        totalPackages: 34,
+        totalVolume: 4.094,
+        amountStandard: 1572.84,
+        amountActual: 1572.84,
+        amountFreight: 0.00,
+        amountAdjustment: 0.00,
+        amountRebate: 0.00,
+        qtyOrdered: 34,
+        qtyLocked: 0,
+        qtyScheduled: 0,
+        qtyShipped: 0,
+        qtyCancelled: 0,
+        salesperson: "Cloris",
+        merchandiser: "Massey,Linda",
+        currency: "USD"
+      },
+      {
+        id: 4,
+        linshiPo: "L25121726734",
+        customerPo: "KAIROS-V1",
+        orderType: "自主下单",
+        poStatus: "草稿",
+        cargoType: "非定制",
+        tradeTerm: "FOB",
+        customerGrade: "A",
+        customerName: "Kairos Global Ventures Inc.",
+        account: "kairos_global",
+        accountNickname: "Kairos Main",
+        orderDate: "2025-12-20",
+        totalPackages: 590,
+        totalVolume: 62.363,
+        amountStandard: 22000.00,
+        amountActual: 21891.06,
+        amountFreight: 0.00,
+        amountAdjustment: -108.94,
+        amountRebate: 0.00,
+        qtyOrdered: 590,
+        qtyLocked: 0,
+        qtyScheduled: 0,
+        qtyShipped: 0,
+        qtyCancelled: 0,
+        salesperson: "David",
+        merchandiser: "Smith,Anna",
+        currency: "USD"
+      }
+    ];
+
+    // --- 3. 侧边栏子组件 ---
+    function SidebarItem({ icon, text, active, children }) {
+      return (
+        <div className="mb-1">
+          <div className={`flex items-center gap-3 px-6 py-3 cursor-pointer transition-colors ${active ? 'bg-[#0f172a] text-white border-l-4 border-blue-500' : 'hover:bg-[#334155] border-l-4 border-transparent'}`}>
+            <span className={active ? 'text-blue-400' : 'text-gray-400'}>{icon}</span>
+            <span className="font-medium">{text}</span>
+          </div>
+          {children && (
+            <div className="bg-[#1e293b]">
+              {children}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // --- 4. 主应用组件 ---
+    function App() {
+      const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+      const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+
+      const toggleSelectAll = (e) => {
+        if (e.target.checked) {
+          setSelectedRowKeys(mockData.map(item => item.id));
+        } else {
+          setSelectedRowKeys([]);
+        }
+      };
+
+      const toggleSelect = (id) => {
+        if (selectedRowKeys.includes(id)) {
+          setSelectedRowKeys(selectedRowKeys.filter(key => key !== id));
+        } else {
+          setSelectedRowKeys([...selectedRowKeys, id]);
+        }
+      };
+
+      return (
+        <div className="flex h-screen bg-gray-50 text-sm font-sans">
+          {/* 侧边栏 (Sidebar) */}
+          <div className="w-56 bg-[#1e293b] text-gray-300 flex flex-col h-full shrink-0">
+            <div className="flex items-center justify-center h-16 border-b border-gray-700">
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#1e293b] font-bold text-xs">
+                LINSY
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto py-4">
+              <SidebarItem icon={<Users size={18} />} text="客户中心" />
+              <SidebarItem icon={<Box size={18} />} text="商品中心" />
+              <SidebarItem icon={<LayoutGrid size={18} />} text="交易中心" active>
+                <div className="ml-8 mt-2 flex flex-col gap-2 text-gray-400">
+                  <span className="hover:text-white cursor-pointer">咨询单列表</span>
+                  <span className="hover:text-white cursor-pointer">交期反馈配置</span>
+                  <span className="text-blue-400 font-medium cursor-pointer">PO单列表</span>
+                  <span className="hover:text-white cursor-pointer">PO单列表(审核)</span>
+                  <span className="hover:text-white cursor-pointer">BPS单列表</span>
+                </div>
+              </SidebarItem>
+              <SidebarItem icon={<Briefcase size={18} />} text="营销中心" />
+              <SidebarItem icon={<FileText size={18} />} text="仓单列表" />
+              <SidebarItem icon={<BarChart2 size={18} />} text="财务中心" />
+              <SidebarItem icon={<Settings size={18} />} text="系统管理" />
+            </div>
+          </div>
+
+          {/* 主内容区 (Main Content) */}
+          <div className="flex-1 flex flex-col h-full overflow-hidden">
+            {/* 顶部导航与面包屑 (Header) */}
+            <div className="h-14 bg-white border-b flex items-center justify-between px-6 shrink-0">
+              <div className="text-gray-500 text-sm flex items-center gap-2">
+                <span>交易中心</span>
+                <span className="text-gray-300">/</span>
+                <span>订单管理</span>
+                <span className="text-gray-300">/</span>
+                <span className="text-gray-900 font-medium">PO单列表</span>
+              </div>
+              <div className="text-gray-500 flex items-center gap-4">
+                <span>广东林氏家居股份有限公司</span>
+                <span className="font-medium text-gray-700">杨婉靖</span>
+              </div>
+            </div>
+
+            {/* 主体滚动区 */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              
+              {/* 筛选项卡片 (Filter Section) */}
+              <div className="bg-white p-4 rounded-md shadow-sm border border-gray-100">
+                {/* 基础筛选 (常驻区) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                  <div className="flex border border-gray-300 rounded bg-white focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 overflow-hidden">
+                    <select className="bg-gray-50 border-r border-gray-300 px-2 py-1.5 text-gray-600 focus:outline-none text-xs cursor-pointer">
+                      <option value="linshiPo">林氏PO号</option>
+                      <option value="customerPo">客户PO号</option>
+                    </select>
+                    <input type="text" placeholder="请输入单号" className="flex-1 px-3 py-1.5 focus:outline-none w-full" />
+                  </div>
+
+                  <div className="flex border border-gray-300 rounded bg-white focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 overflow-hidden">
+                    <select className="bg-gray-50 border-r border-gray-300 px-2 py-1.5 text-gray-600 focus:outline-none text-xs cursor-pointer">
+                      <option value="customerName">客户名称</option>
+                      <option value="account">下单账户</option>
+                    </select>
+                    <input type="text" placeholder="请输入客户信息" className="flex-1 px-3 py-1.5 focus:outline-none w-full" />
+                  </div>
+
+                  <div className="flex border border-gray-300 rounded bg-white focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 overflow-hidden">
+                    <select className="bg-gray-50 border-r border-gray-300 px-2 py-1.5 text-gray-600 focus:outline-none text-xs cursor-pointer">
+                      <option value="salesperson">业务员</option>
+                      <option value="merchandiser">跟单员</option>
+                    </select>
+                    <input type="text" placeholder="请输入人员姓名" className="flex-1 px-3 py-1.5 focus:outline-none w-full" />
+                  </div>
+
+                  <div className="flex items-center border border-gray-300 rounded bg-white focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 overflow-hidden px-2">
+                    <span className="text-gray-500 text-xs shrink-0 mr-1">下单日期</span>
+                    <input type="date" className="flex-1 py-1.5 focus:outline-none text-gray-600 bg-transparent w-full text-xs" />
+                    <span className="text-gray-300 mx-1">-</span>
+                    <input type="date" className="flex-1 py-1.5 focus:outline-none text-gray-600 bg-transparent w-full text-xs" />
+                  </div>
+                </div>
+
+                {/* 高级筛选 (折叠区) */}
+                {isFilterExpanded && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mt-4 pt-4 border-t border-gray-100">
+                    <select className="border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-gray-600">
+                      <option value="">PO单状态 (全部)</option>
+                      <option value="draft">草稿</option>
+                      <option value="audit">已审核</option>
+                      <option value="effective">已生效</option>
+                      <option value="shipped_part">部分发运</option>
+                      <option value="reject">调价驳回</option>
+                    </select>
+                    <select className="border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-gray-600">
+                      <option value="">订单类型 (全部)</option>
+                      <option value="self">自主下单</option>
+                      <option value="platform">平台代客下单</option>
+                    </select>
+                    <select className="border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-gray-600">
+                      <option value="">货物类型 (全部)</option>
+                      <option value="standard">非定制</option>
+                      <option value="custom">定制</option>
+                    </select>
+                    <select className="border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-gray-600">
+                      <option value="">贸易方式 (全部)</option>
+                      <option value="fob">FOB</option>
+                      <option value="cif">CIF</option>
+                      <option value="exw">EXW</option>
+                    </select>
+                    <select className="border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-gray-600">
+                      <option value="">客户等级 (全部)</option>
+                      <option value="s">S级</option>
+                      <option value="a">A级</option>
+                      <option value="b">B级</option>
+                    </select>
+                    <input type="text" placeholder="物料编号(SKU)" className="border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-gray-600 placeholder-gray-500" />
+                    <select className="border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-gray-600">
+                      <option value="">是否有取消 (全部)</option>
+                      <option value="yes">是 (含取消数量)</option>
+                      <option value="no">否 (无取消数量)</option>
+                    </select>
+                    <select className="border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-gray-600">
+                      <option value="">包含附加金额 (全部)</option>
+                      <option value="freight">有运费</option>
+                      <option value="adjustment">有调价</option>
+                      <option value="rebate">有返利</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* 筛选操作栏 */}
+                <div className="flex justify-between items-center mt-4">
+                  <button 
+                    onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+                    className="text-blue-500 hover:text-blue-700 text-xs flex items-center gap-1 select-none"
+                  >
+                    {isFilterExpanded ? '收起高级筛选' : '展开高级筛选'} 
+                    {isFilterExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </button>
+                  <div className="flex gap-2">
+                    <button className="flex items-center gap-1 px-4 py-1.5 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors">
+                      <RotateCcw size={14} /> 重置
+                    </button>
+                    <button className="flex items-center gap-1 px-4 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors shadow-sm">
+                      <Search size={14} /> 查询
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 操作按钮区 */}
+              <div className="flex justify-end gap-2">
+                <button className="flex items-center gap-1 px-3 py-1.5 bg-white border border-blue-500 text-blue-500 rounded hover:bg-blue-50 transition-colors shadow-sm">
+                  <Download size={14} /> 导出
+                </button>
+                <button className="flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors shadow-sm">
+                  <Mail size={14} /> 重发PI邮件
+                </button>
+              </div>
+
+              {/* 表格区 */}
+              <div className="bg-white rounded-md shadow-sm border border-gray-200 overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[1200px]">
+                  <thead>
+                    <tr className="bg-gray-50 text-gray-600 border-b border-gray-200">
+                      <th className="py-3 px-4 w-12 text-center">
+                        <input type="checkbox" onChange={toggleSelectAll} checked={selectedRowKeys.length === mockData.length && mockData.length > 0} className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
+                      </th>
+                      <th className="py-3 px-4 font-medium min-w-[160px]">PO单信息</th>
+                      <th className="py-3 px-4 font-medium min-w-[150px]">订单状态与属性类型</th>
+                      <th className="py-3 px-4 font-medium min-w-[200px]">客户与下单账户</th>
+                      <th className="py-3 px-4 font-medium min-w-[120px]">相关人员</th>
+                      <th className="py-3 px-4 font-medium min-w-[100px]">下单日期</th>
+                      <th className="py-3 px-4 font-medium min-w-[100px]">物流信息</th>
+                      <th className="py-3 px-4 font-medium min-w-[160px]">总数量</th>
+                      <th className="py-3 px-4 font-medium min-w-[120px]">总金额</th>
+                      <th className="py-3 px-4 font-medium min-w-[120px]">附加金额</th>
+                      <th className="py-3 px-4 font-medium w-36 text-center sticky right-0 bg-gray-50 border-l border-gray-200 z-10 shadow-[-2px_0_5px_rgba(0,0,0,0.02)]">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {mockData.map((row) => (
+                      <tr key={row.id} className="group hover:bg-blue-50/30 transition-colors">
+                        <td className="py-3 px-4 text-center align-top pt-4">
+                          <input 
+                            type="checkbox" 
+                            checked={selectedRowKeys.includes(row.id)}
+                            onChange={() => toggleSelect(row.id)}
+                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" 
+                          />
+                        </td>
+                        
+                        <td className="py-3 px-4 align-top pt-4">
+                          <div className="flex flex-col gap-1.5 pt-0.5">
+                            <div className="flex items-center gap-1 text-blue-600 font-medium hover:underline cursor-pointer">
+                              <span className="text-gray-500 font-normal text-xs">林氏:</span>
+                              {row.linshiPo}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className="text-gray-500 text-xs">客户:</span>
+                              <span className="text-gray-800">{row.customerPo}</span>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="py-3 px-4 align-top pt-4">
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1.5" title="PO单状态">
+                                <span className={`w-1.5 h-1.5 rounded-full ${row.poStatus === '部分发运' ? 'bg-green-500' : row.poStatus === '已审核' ? 'bg-blue-500' : row.poStatus === '草稿' ? 'bg-gray-400' : row.poStatus === '已生效' ? 'bg-emerald-500' : row.poStatus === '调价驳回' ? 'bg-red-500' : 'bg-orange-500'}`}></span>
+                                <span className={`font-medium cursor-help ${row.poStatus === '部分发运' ? 'text-green-700' : row.poStatus === '已审核' ? 'text-blue-700' : row.poStatus === '草稿' ? 'text-gray-600' : row.poStatus === '已生效' ? 'text-emerald-700' : row.poStatus === '调价驳回' ? 'text-red-700' : 'text-orange-700'}`}>
+                                  {row.poStatus}
+                                </span>
+                              </div>
+                              <span title="订单类型" className="bg-blue-50 text-blue-600 text-[10px] px-1.5 py-0.5 rounded border border-blue-100 whitespace-nowrap cursor-help">
+                                {row.orderType}
+                              </span>
+                            </div>
+                            <div className="flex items-center text-xs text-gray-500 gap-2 whitespace-nowrap">
+                              <div className="flex items-center gap-1">
+                                <span className="text-gray-400">货物:</span>
+                                <span className="text-gray-700">{row.cargoType}</span>
+                              </div>
+                              <span className="text-gray-300">|</span>
+                              <div className="flex items-center gap-1">
+                                <span className="text-gray-400">贸易:</span>
+                                <span className="text-gray-700">{row.tradeTerm}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="py-3 px-4 align-top pt-4">
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex items-start gap-1.5 pt-0.5">
+                              <span title="客户等级" className="mt-0.5 shrink-0 bg-amber-100 text-amber-700 text-[10px] px-1 py-0.5 rounded border border-amber-200 font-bold whitespace-nowrap cursor-help">
+                                {row.customerGrade}级
+                              </span>
+                              <span title="客户名称" className="text-gray-900 font-medium break-words leading-tight cursor-help">
+                                {row.customerName}
+                              </span>
+                            </div>
+                            <div className="flex flex-col gap-0.5 mt-1">
+                              <div className="flex text-xs">
+                                <span className="text-gray-400 w-10 shrink-0">账户:</span>
+                                <span className="text-gray-600 truncate" title={row.account}>{row.account || '-'}</span>
+                              </div>
+                              <div className="flex text-xs">
+                                <span className="text-gray-400 w-10 shrink-0">昵称:</span>
+                                <span className="text-gray-600 truncate" title={row.accountNickname}>{row.accountNickname || '-'}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="py-3 px-4 align-top pt-4">
+                           <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center text-xs">
+                              <span className="text-gray-400 w-12 shrink-0">业务员:</span>
+                              <span className="text-gray-800">{row.salesperson}</span>
+                            </div>
+                            <div className="flex items-center text-xs">
+                              <span className="text-gray-400 w-12 shrink-0">跟单员:</span>
+                              <span className="text-gray-800">{row.merchandiser}</span>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="py-3 px-4 align-top pt-4 text-gray-700 whitespace-nowrap">
+                          <span title="下单日期" className="cursor-help">{row.orderDate}</span>
+                        </td>
+
+                        <td className="py-3 px-4 align-top pt-4">
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-gray-400 text-xs w-8 shrink-0">件数:</span>
+                              <span className="text-gray-800 font-medium">{row.totalPackages}</span>
+                            </div>
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-gray-400 text-xs w-8 shrink-0">方数:</span>
+                              <span className="text-gray-800">{row.totalVolume}</span>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="py-3 px-4 align-top pt-3">
+                          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs w-36">
+                            <div className="flex justify-between"><span className="text-gray-400">下单:</span><span className="text-gray-800 font-medium">{row.qtyOrdered}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-400">发货:</span><span className="text-gray-700">{row.qtyShipped}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-400">锁货:</span><span className="text-gray-700">{row.qtyLocked}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-400">排柜:</span><span className="text-gray-700">{row.qtyScheduled}</span></div>
+                            <div className="flex justify-between col-span-2 pt-0.5 border-t border-gray-100"><span className="text-gray-400">取消:</span><span className="text-gray-400">{row.qtyCancelled}</span></div>
+                          </div>
+                        </td>
+
+                        <td className="py-3 px-4 align-top pt-4">
+                          <div className="flex flex-col gap-2 w-28">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-gray-400 shrink-0">标准:</span>
+                              <span className="text-gray-600">{row.currency === 'USD' ? '$' : '¥'}{row.amountStandard.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm font-semibold">
+                              <span className="text-gray-500 shrink-0">实际:</span>
+                              <span className="text-orange-600">{row.currency === 'USD' ? '$' : '¥'}{row.amountActual.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="py-3 px-4 align-top pt-4">
+                          <div className="flex flex-col gap-1.5 w-28 text-xs">
+                            <div className="flex justify-between"><span className="text-gray-400">运费:</span><span className="text-gray-700">{row.currency === 'USD' ? '$' : '¥'}{row.amountFreight.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-400">调价:</span><span className="text-gray-700">{row.currency === 'USD' ? '$' : '¥'}{row.amountAdjustment.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-400">返利:</span><span className="text-gray-700">{row.currency === 'USD' ? '$' : '¥'}{row.amountRebate.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span></div>
+                          </div>
+                        </td>
+
+                        <td className="py-3 px-4 align-top pt-4 text-center sticky right-0 bg-white group-hover:bg-[#f8faff] border-l border-gray-100 z-10 transition-colors shadow-[-2px_0_5px_rgba(0,0,0,0.02)]">
+                          <div className="flex flex-wrap justify-center gap-x-3 gap-y-2 w-32 mx-auto">
+                            {['草稿', '调价驳回'].includes(row.poStatus) && (
+                              <>
+                                <button className="text-blue-500 hover:text-blue-700 hover:underline text-xs">审核</button>
+                                <button className="text-blue-500 hover:text-blue-700 hover:underline text-xs">申请调价</button>
+                                <button className="text-blue-500 hover:text-blue-700 hover:underline text-xs">编辑</button>
+                              </>
+                            )}
+                            {['已生效'].includes(row.poStatus) && (
+                              <>
+                                <button className="text-blue-500 hover:text-blue-700 hover:underline text-xs">排单</button>
+                                <button className="text-blue-500 hover:text-blue-700 hover:underline text-xs">取消申请</button>
+                                <button className="text-blue-500 hover:text-blue-700 hover:underline text-xs text-left leading-tight">修改客户PO单号</button>
+                              </>
+                            )}
+                            <button className="text-blue-500 hover:text-blue-700 hover:underline text-xs">日志</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* 分页区 */}
+              <div className="flex items-center justify-end py-4 text-gray-500 text-sm pb-8">
+                <div className="flex items-center gap-4">
+                  <span>共 {mockData.length} 条</span>
+                  <select className="border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none">
+                    <option>10条/页</option>
+                    <option>20条/页</option>
+                    <option>50条/页</option>
+                  </select>
+                  <div className="flex items-center gap-1">
+                    <button className="p-1 border border-gray-300 rounded text-gray-400 hover:bg-gray-50 disabled:opacity-50"><ChevronLeft size={16} /></button>
+                    <button className="px-2.5 py-1 min-w-[28px] bg-blue-500 text-white rounded text-center">1</button>
+                    <button className="px-2.5 py-1 min-w-[28px] border border-gray-300 text-gray-600 rounded text-center hover:bg-gray-50">2</button>
+                    <button className="px-2.5 py-1 min-w-[28px] border border-gray-300 text-gray-600 rounded text-center hover:bg-gray-50">3</button>
+                    <span className="px-1"><MoreHorizontal size={16} /></span>
+                    <button className="p-1 border border-gray-300 rounded text-gray-600 hover:bg-gray-50"><ChevronRight size={16} /></button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    前往 <input type="text" className="w-12 border border-gray-300 rounded px-2 py-1 text-center" defaultValue="1" /> 页
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // --- 5. 渲染应用 ---
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
